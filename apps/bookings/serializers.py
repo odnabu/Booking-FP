@@ -5,6 +5,7 @@ from rest_framework import serializers
 from datetime import date
 
 from apps.bookings.models import Booking
+# from apps.users.serializers import ListUserSerializer
 
 
 # Получение СОКРАЩЕННОГО списка ВСЕХ бронирований:
@@ -18,13 +19,13 @@ class ListBookingSerializer(serializers.ModelSerializer):
     address_country = serializers.CharField(source='offer.address.country', read_only=True)
     address_city = serializers.CharField(source='offer.address.city', read_only=True)
 
-
     class Meta:
         model = Booking
         fields = ['id', 'user_role', 'status',
                   'offer_id', 'offer_title',
                   'tenant_username', 'landlord_username',
-                  'address_id', 'address_country', 'address_city']   #
+                  'address_id', 'address_country', 'address_city',
+                  'start_date', 'end_date']   #
 
 
 # Создание / обновление (Create, Update) предложения и получение ДЕТАЛЬНОЙ (Detail) информации о предложении:

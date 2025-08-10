@@ -1,3 +1,4 @@
+# apps/reviews/models.py
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from rest_framework.authtoken.admin import User
@@ -10,7 +11,7 @@ class Review(models.Model):
     Reviews from users (tenants) about real estate.
     """
 
-    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)],
+    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)],
                                  verbose_name='Rating between 1 and 5',
                                  help_text='1 - very bad, 5 - excellent.')
     comment = models.TextField()
@@ -25,7 +26,7 @@ class Review(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='reviews',         # user.reviews.all() - все отзывы пользователя
-        verbose_name='Author of Review'
+        verbose_name='Reviewer'
     )
 
     # 2. Связь с Booking (бронирование, по которому оставлен отзыв)
@@ -38,11 +39,11 @@ class Review(models.Model):
     )
 
     def __str__(self):
-        return f"Отзыв от {self.reviewer.username} - {self.rating}★"
+        return f"Review by {self.reviewer.username} - {self.rating}★"
 
     class Meta:
-        ordering = ['-created_at']
         # Ограничение: один отзыв на одно бронирование от одного пользователя
         unique_together = ['reviewer', 'booking']
+        ordering = ['-created_at']
 
 

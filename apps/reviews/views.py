@@ -32,6 +32,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     # permission_classes = [IsLandlordOrAdminOrReadOnly]  # только пользователям с ролью арендодателя "landlord"
 
     # _____  Переопределяем метод ViewSet  ______
+
     # Этот метод позволяет динамически выбирать сериалайзер:
     def get_serializer_class(self):
         # Для безопасных методов (только чтение), таких, как GET:
@@ -39,3 +40,19 @@ class ReviewViewSet(viewsets.ModelViewSet):
             return ListReviewSerializer
         # Для остальных методов (POST, PUT, DELETE):
         return ReviewSerializer
+
+    # CRUD, но без возможности менять отзыв чужого пользователя.
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+    # # Эндпоинт для отзывов по конкретному предложению:
+    # GET /reviews/offer/{offer_id}/ — отзывы для конкретного объявления.
+    @action(detail=False, methods=['get'], url_path='offer/(?P<offer_id>[^/.]+)')
+    def reviews_for_offer(self, request, offer_id=None):
+        """
+        Reviews for a specific offer.
+        """
+        reviews = Review.objects.filter(booking__offer__id=offer_id)
+        serializer = self.get_serializer(reviews, many=True)
+        return Response(serializer.data)

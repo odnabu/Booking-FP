@@ -53,7 +53,11 @@ CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[])
 INSTALLED_APPS = [
     # Для подключения Админки:
     'django.contrib.admin',
+    # Пакет расширений для Python. Например, чтобы выгрузить список всех URL-эндпоинтов проекта в файл:
+    'django_extensions',
 
+    # _____ Default packages ___________________
+    # Пакеты, которые были установлены по умолчанию при создании проекта Django:
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

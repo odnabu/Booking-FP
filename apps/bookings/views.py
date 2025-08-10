@@ -1,10 +1,12 @@
 from django.shortcuts import render
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+
 from django.utils.timezone import now
 from datetime import timedelta
 
@@ -36,47 +38,46 @@ class BookingViewSet(viewsets.ModelViewSet):
     #                                                     # или Админам могут создавать, обновлять и удалять бронирования.
     permission_classes = [IsAuthenticated]          # ВСЕ аутентифицированные пользователи могу бронировать.
 
-    # _____  Переопределяем метод ViewSet  ______
+
+    # _____  ПЕРЕОПРЕДЕЛЕНИЯ  метода  ViewSet  ___________________________________________________________
+
     # Этот метод позволяет динамически выбирать сериалайзер:
     def get_serializer_class(self):
         # Для безопасных методов (только чтение), таких, как GET:
-        if self.action in ['list', 'all_bookings']:     # Разеление для админов и остальных пользователей.
+        if self.action in ['list', 'landlord_bookings']:     # Разделение для landlords и остальных пользователей.
             return ListBookingSerializer
         # Для остальных методов (POST, PUT, DELETE):
         return BookingSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(tenant=self.request.user,)
-
-    # Переопределение метода get_queryset, чтобы админы могли переходить по специальному для них эндпоинту
-    # для просмотра всего списка бронирований.
+    # Переопределение метода get_queryset, чтобы админы, как пользователи с тремя ролями (admain,
+    # tenant, landlord) могли переходить по специальному для них эндпоинту
+    # для просмотра разных списков списка бронирований.
+    # 1-st Variant:
     # def get_queryset(self):
     #     user = self.request.user
     #     if user.is_staff:
     #         return Booking.objects.all()                # админ видит всё
     #     return Booking.objects.filter(tenant=user)      # остальные — только свои
+    # 2-nd Variant
+    # def get_queryset(self):
+    #     """
+    #     For a regular /bookings/ endpoint, we return only the current user's bookings,
+    #     regardless of whether he is an admin or not.
+    #     """
+    #     return Booking.objects.filter(tenant=self.request.user)
+    # 3-d Variant:
     def get_queryset(self):
-        """
-        For a regular /bookings/ endpoint, we return only the current user's bookings,
-        regardless of whether he is an admin or not.
-        """
-        return Booking.objects.filter(tenant=self.request.user)
+        user = self.request.user
+        # для списка — арендаторы видят только свои брони:
+        if self.action == 'list':
+            return Booking.objects.filter(tenant=user)
+        # для retrieve (детали) — либо твои как арендатора, либо на твою недвижимость:
+        if self.action in ['retrieve', 'confirm_booking', 'cancel_booking']:
+            return Booking.objects.filter(tenant=user) | Booking.objects.filter(offer__owner=user)
+        return Booking.objects.none()
 
-
-    @action(detail=False, methods=['get'],
-            permission_classes=[IsAdminUser],
-            url_path='all')
-    def all_bookings(self, request):
-        """
-        Additional endpoint for admins: viewing all bookings with filtering, searching and sorting.
-        """
-        qs = self.filter_queryset(Booking.objects.all())
-        page = self.paginate_queryset(qs)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+    def perform_create(self, serializer):
+        serializer.save(tenant=self.request.user,)
 
 
     # Просмотр бронирований (свои активные и завершённые).
@@ -100,7 +101,7 @@ class BookingViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-    # Отмена бронирования (только до определённой даты)
+    # Отмена бронирования съемщиком (Tenant): только до определённой даты.
     # Запрет отмены, если до начала бронирования осталось меньше 2 дней.
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -122,31 +123,48 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     # Подтверждение / отклонение бронирования (для арендодателя)
     # Для booking.landlord (он же booking.offer.owner):
-    @action(detail=True, methods=['post'])
-    def confirm(self, request, pk=None):
+    # Как это работает:
+    #   - Арендатор → видит свои брони по /bookings/ и может сделать бронирование.
+    #   - Лендлорд → видит список бронирований на свои объекты по /bookings/landlord/.
+    #   - Лендлорд → может подтвердить или отменить бронирование через /bookings/{id}/confirm/ или /bookings/{id}/cancel/.
+    #   - Админ → может делать всё.
+
+    # Список бронирований других пользователей на объекты, которыми владеет текущий пользователь:
+    @action(detail=False, methods=['get'], url_path='landlord')
+    def landlord_bookings(self, request):
         """
-        Booking confirmation (landlord only).
+        List of reservations for properties owned by the current user (if they have the landlord role).
+        """
+        user = request.user
+        if user.profile.role != 'landlord' and not request.user.is_staff:
+            return Response({"detail": "Not allowed. You have no permissions to this action."}, status=403)
+        bookings = Booking.objects.filter(offer__owner=user)
+        serializer = self.get_serializer(bookings, many=True)
+        return Response(serializer.data)
+
+    # Подтверждение бронирования (только для владельца или админа):
+    @action(detail=True, methods=['post'], url_path='confirm')
+    def confirm_booking(self, request, pk=None):
+        """
+        Booking confirmation (for owner or admin only).
         """
         booking = self.get_object()
-
-        if booking.landlord != request.user:
-            return Response({"error": "You are not the owner of the property.."}, status=403)
-
+        if booking.offer.owner != request.user and not request.user.is_staff:
+            return Response({"detail": "Not allowed. You have no permissions to this action."}, status=status.HTTP_403_FORBIDDEN)
         booking.status = 'confirmed'
         booking.save()
         return Response({"status": "Booking confirmed."})
 
-    @action(detail=True, methods=['post'])
-    def reject(self, request, pk=None):
+    # Отмена бронирования (только для владельца или админа):
+    @action(detail=True, methods=['post'], url_path='cancel')
+    def cancel_booking(self, request, pk=None):
         """
-        Reject booking (landlord only).
+        Cancel a booking (for owner or admin only).
         """
         booking = self.get_object()
-
-        if booking.landlord != request.user:
-            return Response({"error": "You are not the owner of the property."}, status=403)
-
+        if booking.offer.owner != request.user and not request.user.is_staff:
+            return Response({"detail": "Not allowed. You have no permissions to this action."}, status=status.HTTP_403_FORBIDDEN)
         booking.status = 'cancelled'
         booking.save()
-        return Response({"status": "Reservation rejected."})
+        return Response({"status": "Booking cancelled."})
 
