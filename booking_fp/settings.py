@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     'apps.addresses.apps.AddressesConfig',
     'apps.bookings.apps.BookingsConfig',
     'apps.reviews.apps.ReviewsConfig',
+    'utils',
     # ____ Подключение Swagger и ReDoc _________
     'drf_spectacular',
     'drf_spectacular_sidecar',

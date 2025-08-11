@@ -1,4 +1,4 @@
-Структура проекта:
+STRUCTURE of PROJECT:
 ├── apps/
 │   ├── addresses/
 │   │   ├── migrations/

@@ -46,7 +46,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-    # # Эндпоинт для отзывов по конкретному предложению:
+    # Эндпоинт для отзывов по конкретному предложению:
     # GET /reviews/offer/{offer_id}/ — отзывы для конкретного объявления.
     @action(detail=False, methods=['get'], url_path='offer/(?P<offer_id>[^/.]+)')
     def reviews_for_offer(self, request, offer_id=None):

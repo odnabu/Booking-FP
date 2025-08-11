@@ -6,6 +6,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from django.db.models import Count
 
 
 from apps.offers.models import *
@@ -99,6 +100,4 @@ class OfferViewSet(viewsets.ModelViewSet):
         offer.is_active = not offer.is_active
         offer.save()
         return Response({'is_active': offer.is_active}, status=status.HTTP_200_OK)
-
-
 

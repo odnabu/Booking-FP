@@ -1,5 +1,6 @@
 # вывод дерева проекта без папки .venv:
 # python utils/show_tree.py
+# python utils/show_tree.py --save utils/project_tree.txt
 
 import os
 import sys
@@ -47,12 +48,12 @@ if __name__ == "__main__":
             original_stdout = sys.stdout
             sys.stdout = f
 
-            print("Структура проекта:")
+            print("STRUCTURE of PROJECT:")
             print_tree(".")
 
             sys.stdout = original_stdout
 
-        print(f"✅ Структура проекта сохранена в файл: {filename}")
+        print(f"✅ Structure of project was saved in file: {filename}")
     else:
-        print("Структура проекта:")
+        print("Structure of project:")
         print_tree(".")
