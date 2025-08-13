@@ -1,3 +1,4 @@
+# common/permissions.py
 # Кастомные классы разрешений.
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 

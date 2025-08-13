@@ -1,3 +1,4 @@
+# apps/users/forms.py
 # Django-форма UserRegisterForm для регистрации нового пользователя.
 # Смотри:
 #   - реализация форм: https://chatgpt.com/s/t_6893b3d1ec7881918bd7ff040240ed52.

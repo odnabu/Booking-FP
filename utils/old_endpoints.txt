@@ -26,14 +26,14 @@
 | <span style='color:#2ecc71'>GET</span> <span style='color:#f1c40f'>POST</span> | `api/v1/bookings/^\.(?P<format>[a-z0-9]+)/?$` | `apps.bookings.views.BookingViewSet` |
 | <span style='color:#2ecc71'>GET</span> | `api/v1/bookings/^active/$` | `apps.bookings.views.BookingViewSet` |
 | <span style='color:#2ecc71'>GET</span> | `api/v1/bookings/^active\.(?P<format>[a-z0-9]+)/?$` | `apps.bookings.views.BookingViewSet` |
-| <span style='color:#2ecc71'>GET</span> | `api/v1/bookings/^all/$` | `apps.bookings.views.BookingViewSet` |
-| <span style='color:#2ecc71'>GET</span> | `api/v1/bookings/^all\.(?P<format>[a-z0-9]+)/?$` | `apps.bookings.views.BookingViewSet` |
 | <span style='color:#2ecc71'>GET</span> | `api/v1/bookings/^completed/$` | `apps.bookings.views.BookingViewSet` |
 | <span style='color:#2ecc71'>GET</span> | `api/v1/bookings/^completed\.(?P<format>[a-z0-9]+)/?$` | `apps.bookings.views.BookingViewSet` |
 | <span style='color:#2ecc71'>GET</span> | `api/v1/bookings/^landlord/$` | `apps.bookings.views.BookingViewSet` |
 | <span style='color:#2ecc71'>GET</span> | `api/v1/bookings/^landlord\.(?P<format>[a-z0-9]+)/?$` | `apps.bookings.views.BookingViewSet` |
 | <span style='color:#2ecc71'>GET</span> <span style='color:#3498db'>PUT</span> <span style='color:#7f8c8d'>PATCH</span> <span style='color:#e74c3c'>DELETE</span> | `api/v1/bookings/^(?P<pk>[^/.]+)/$` | `apps.bookings.views.BookingViewSet` |
 | <span style='color:#2ecc71'>GET</span> <span style='color:#3498db'>PUT</span> <span style='color:#7f8c8d'>PATCH</span> <span style='color:#e74c3c'>DELETE</span> | `api/v1/bookings/^(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$` | `apps.bookings.views.BookingViewSet` |
+| <span style='color:#f1c40f'>POST</span> | `api/v1/bookings/^(?P<pk>[^/.]+)/cancel/$` | `apps.bookings.views.BookingViewSet` |
+| <span style='color:#f1c40f'>POST</span> | `api/v1/bookings/^(?P<pk>[^/.]+)/cancel\.(?P<format>[a-z0-9]+)/?$` | `apps.bookings.views.BookingViewSet` |
 | <span style='color:#f1c40f'>POST</span> | `api/v1/bookings/^(?P<pk>[^/.]+)/cancel/$` | `apps.bookings.views.BookingViewSet` |
 | <span style='color:#f1c40f'>POST</span> | `api/v1/bookings/^(?P<pk>[^/.]+)/cancel\.(?P<format>[a-z0-9]+)/?$` | `apps.bookings.views.BookingViewSet` |
 | <span style='color:#f1c40f'>POST</span> | `api/v1/bookings/^(?P<pk>[^/.]+)/confirm/$` | `apps.bookings.views.BookingViewSet` |

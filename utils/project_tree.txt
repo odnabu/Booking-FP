@@ -93,11 +93,17 @@ STRUCTURE of PROJECT:
 │       ├── register.html
 │       └── register_success.html
 ├── utils/
+│   ├── management/
+│   │   ├── commands/
+│   │   │   ├── __init__.py
+│   │   │   └── export_urls.py
+│   │   └── __init__.py
 │   ├── __init__.py
+│   ├── endpoints.md
+│   ├── endpoints.png
 │   ├── project_tree.txt
 │   └── show_tree.py
 ├── .env
 ├── .gitignore
 ├── manage.py
-├── requirements.txt
-└── urls.txt
+└── requirements.txt

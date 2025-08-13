@@ -1,7 +1,9 @@
+# utils/management/commands/export_urls.py
 # Кастомная management-команда export_urls, которая будет пробегать по urlpatterns проекта и
 # выгружать все эндпоинты в Markdown-файл endpoints.md и в endpoints.png.
 # Установить библиотеку:
 # pip install pillow
+# Запустить команду в терминале для выполнения скрипта:
 # python manage.py export_urls
 
 
@@ -13,6 +15,29 @@ from PIL import Image, ImageDraw, ImageFont
 class Command(BaseCommand):
     help = "Export all project URLs to a Markdown file and PNG with colored HTTP methods"
 
+    # # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # # TXT export
+    # def extract_urls(self, patterns, prefix=''):
+    #     url_list = []
+    #     for pattern in patterns:
+    #         if hasattr(pattern, 'url_patterns'):
+    #             url_list += self.extract_urls(pattern.url_patterns, prefix + str(pattern.pattern))
+    #         else:
+    #             url_list.append(prefix + str(pattern.pattern))
+    #     return url_list
+    #
+    # def handle(self, *args, **kwargs):
+    #     urls = get_resolver().url_patterns
+    #     urls_list = self.extract_urls(urls)
+    #
+    #     file_path = os.path.join(os.getcwd(), "utils/endpoints.txt")
+    #     with open(file_path, "w", encoding="utf-8") as f:
+    #         for url in urls_list:
+    #             f.write(url + "\n")
+    #
+    #     self.stdout.write(self.style.SUCCESS(f"URL-s are saved in {file_path}"))
+
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     def handle(self, *args, **options):
         resolver = get_resolver()
         urls = resolver.url_patterns
@@ -57,14 +82,13 @@ class Command(BaseCommand):
 
         extract_patterns(urls)
 
-        # ----------------------------------------------------------------------------------
         # Markdown export
         output_md = os.path.join(os.getcwd(), "utils/endpoints.md")
         os.makedirs(os.path.dirname(output_md), exist_ok=True)
         with open(output_md, "w", encoding="utf-8") as f:
             f.write("\n".join(md_lines))
 
-        # ----------------------------------------------------------------------------------
+        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         # PNG export
         headers = ("Method(s)", "Path", "View")
         font_path = "arial.ttf"         # Убедись, что файл шрифта доступен
@@ -93,7 +117,7 @@ class Command(BaseCommand):
         img_width = sum(col_widths) + padding * 2
         img_height = (len(table_rows) + 2) * row_height + padding * 2
 
-        img = Image.new("RGB", (img_width, img_height), "#f9f9f9")
+        img = Image.new("RGB", (img_width, img_height), "#0D1117")      # #f9f9f9 - light
         draw = ImageDraw.Draw(img)
 
         # ----------------------------------------------------------------------------------
@@ -113,29 +137,31 @@ class Command(BaseCommand):
             methods = method_str.split(", ")
             method_x = x
             for m in methods:
-                draw.text((method_x+5, y+5), m, fill=method_colors.get(m, "#7f8c8d"), font=font)
-                method_x += get_text_width(m + " ")  # добавляем пробел для отступа
+                draw.text((method_x+5, y+5), m, fill=method_colors.get(m, "#7f8c8d"), font=font)   #
+                method_x += get_text_width(m + " ")   # добавляем пробел для отступа
 
             x += col_widths[0]
             # Путь
-            draw.text((x+5, y+5), path_str, fill="#000000", font=font)
+            draw.text((x+5, y+5), path_str, fill="#92979E", font=font)
             x += col_widths[1]
             # View
-            draw.text((x+5, y+5), view_str, fill="#000000", font=font)
+            draw.text((x+5, y+5), view_str, fill="#92979E", font=font)
             y += row_height
 
         # ----------------------------------------------------------------------------------
         # Линии таблицы
         for i in range(len(table_rows) + 2):
             y_line = padding + i * row_height
-            draw.line([(padding, y_line), (img_width - padding, y_line)], fill="#cccccc")
+            # Горизонтальные лини таблицы:
+            draw.line([(padding, y_line), (img_width - padding, y_line)], fill="#1D2127", width=1)  # #1D2127
 
         x_line = padding
         for w in col_widths:
             x_line += w
-            draw.line([(x_line, padding), (x_line, img_height - padding)], fill="#cccccc")
+            # Вертикальные линии талицы:
+            draw.line([(x_line, padding), (x_line, img_height - padding)], fill="#0D1117", width=1) # #1D2127
 
-        output_png = os.path.join(os.getcwd(), "utils/endpoints.png")
+        output_png = os.path.join(os.getcwd(), "utils/endpoints_dark.png")
         img.save(output_png, format="PNG", optimize=True)
 
-        self.stdout.write(self.style.SUCCESS(f"✅ Endpoints exported to {output_md} and {output_png}"))
+        self.stdout.write(self.style.SUCCESS(f"✅ Endpoints exported to endpoints.txt, {output_md} and {output_png}"))

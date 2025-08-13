@@ -1,3 +1,4 @@
+# apps/offers/views.py
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
@@ -93,7 +94,7 @@ class OfferViewSet(viewsets.ModelViewSet):
         offer = self.get_object()
 
         # Только владелец или админ может переключать статус
-        if offer.user != request.user and not request.user.is_staff:
+        if offer.owner != request.user and not request.user.is_staff:
             return Response({'detail': 'You do not have permission to do this.'},
                             status=status.HTTP_403_FORBIDDEN)
 

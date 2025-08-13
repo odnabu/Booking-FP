@@ -1,3 +1,4 @@
+# apps/views.py
 from django.http import HttpResponse
 
 def hello_user(request):

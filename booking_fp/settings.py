@@ -1,3 +1,4 @@
+# booking_fp/settings.py
 """
 Django settings for booking_fp project.
 
@@ -237,13 +238,13 @@ SIMPLE_JWT = {
 # http://drf-spectacular.readthedocs.io/en/latest/settings.html
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Task Manager API',
-    'DESCRIPTION': 'API для управления задачами и подзадачами',
+    'DESCRIPTION': 'API for booking real estate with reviews and ratings.',
     'VERSION': '1.0.0',
 }
 
 SPECTACULAR_DEFAULTS = {
     'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],  # Permissions for schema UI views
-    # 'SERVE_AUTHENTICATION': None,  # Authentication class for schema UI views; None to use DRF default
+    'SERVE_AUTHENTICATION': None,  # Authentication class for schema UI views; None to use DRF default
 }
 
 
@@ -321,7 +322,7 @@ LOGGING = {
     }
 }
 
-
+# _____  Для подключения сигналов.
 # Настройка параметров электронной почты:
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'    # email выводится в консоль
 EMAIL_HOST_USER = 'noreply@taskmanager.local'                       # От кого отправлять письма

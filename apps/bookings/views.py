@@ -1,3 +1,4 @@
+# apps/bookings/views.py
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
@@ -52,12 +53,6 @@ class BookingViewSet(viewsets.ModelViewSet):
     # Переопределение метода get_queryset, чтобы админы, как пользователи с тремя ролями (admain,
     # tenant, landlord) могли переходить по специальному для них эндпоинту
     # для просмотра разных списков списка бронирований.
-    # 1-st Variant:
-    # def get_queryset(self):
-    #     user = self.request.user
-    #     if user.is_staff:
-    #         return Booking.objects.all()                # админ видит всё
-    #     return Booking.objects.filter(tenant=user)      # остальные — только свои
     # 2-nd Variant
     # def get_queryset(self):
     #     """
@@ -71,9 +66,11 @@ class BookingViewSet(viewsets.ModelViewSet):
         # для списка — арендаторы видят только свои брони:
         if self.action == 'list':
             return Booking.objects.filter(tenant=user)
-        # для retrieve (детали) — либо твои как арендатора, либо на твою недвижимость:
-        if self.action in ['retrieve', 'confirm_booking', 'cancel_booking']:
+        # для retrieve (детали) — либо мои (админа) как арендатора, либо на мою недвижимость:
+        if self.action in ['retrieve', 'confirm_booking', 'reject_booking']:
             return Booking.objects.filter(tenant=user) | Booking.objects.filter(offer__owner=user)
+        if user.is_staff and self.action == 'all_bookings':
+            return Booking.objects.all()            # админ видит всё
         return Booking.objects.none()
 
     def perform_create(self, serializer):
@@ -109,13 +106,10 @@ class BookingViewSet(viewsets.ModelViewSet):
         Cancellation of booking (only 2 days before the start).
         """
         booking = self.get_object()
-
         if booking.tenant != request.user:
             return Response({"error": "You cannot cancel this reservation."}, status=403)
-
         if booking.start_date - now().date() < timedelta(days=2):
             return Response({"error": "Cancellation is possible no later than 2 days before the start."}, status=400)
-
         booking.status = 'cancelled'
         booking.save()
         return Response({"status": "Reservation cancelled."})
@@ -156,15 +150,29 @@ class BookingViewSet(viewsets.ModelViewSet):
         return Response({"status": "Booking confirmed."})
 
     # Отмена бронирования (только для владельца или админа):
-    @action(detail=True, methods=['post'], url_path='cancel')
-    def cancel_booking(self, request, pk=None):
+    @action(detail=True, methods=['post'], url_path='reject')
+    def reject_booking(self, request, pk=None):
         """
-        Cancel a booking (for owner or admin only).
+        Reject a booking (for owner or admin only).
         """
         booking = self.get_object()
         if booking.offer.owner != request.user and not request.user.is_staff:
-            return Response({"detail": "Not allowed. You have no permissions to this action."}, status=status.HTTP_403_FORBIDDEN)
-        booking.status = 'cancelled'
+            return Response({"detail": "Not allowed. You have no permissions to this action."},
+                            status=status.HTTP_403_FORBIDDEN)
+        booking.status = 'canceled'
         booking.save()
-        return Response({"status": "Booking cancelled."})
+        return Response({"status": "Booking rejected."})
+
+    # Админ видит бронирования: и свои на не свою недвижимость и других пользователей на свою:
+    @action(detail=False, methods=['get'], url_path='all')
+    def all_bookings(self, request):
+        """
+        The admin sees reservations: both his own for someone else's property and other users' for his own.
+        """
+        user = request.user
+        if user.profile.role != 'landlord' and not request.user.is_staff:
+            return Response({"detail": "Not allowed. You have no permissions to this action."}, status=403)
+        bookings = Booking.objects.filter(tenant=user) | Booking.objects.filter(offer__owner=user)
+        serializer = self.get_serializer(bookings, many=True)
+        return Response(serializer.data)
 

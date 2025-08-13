@@ -1,3 +1,4 @@
+# utils/show_tree.py
 # вывод дерева проекта без папки .venv:
 # python utils/show_tree.py
 # python utils/show_tree.py --save utils/project_tree.txt
